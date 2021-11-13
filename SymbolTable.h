@@ -6,18 +6,33 @@ static int linearProbing(int key, int i,int c1,int c2,int m) {
     return ((key % m) + c1*i) % m;
 }
 static int quadraticProbing(int key, int i,int c1,int c2,int m) {
-    return ((key % m) + i + c1* i * c2*i) % m;
+    return ((key % m) + i + c1*i + c2*i*i) % m;
 }
 static int doubleHashing(int key, int i,int c1,int c2,int m) {
     int h1 = key % m;
     int h2 = 1 + (key % (m-2));
-    return (h1 + c1*i * h2) % m;
+    return (h1 + c1*i*h2) % m;
 }
+////////////////////////////////////////////////////////////
+class Symbol{
+public:
+    string name;
+    string type ="";
+    int scope;
+    string argList =""; // Chua decode
+    int encode=-1;
+    int index=-1;
+public:
+    Symbol(){};
+    Symbol(const string &name, int scope) : name(name), scope(scope) {};
+    ~Symbol() {};
+};
+
 class OpenHash{
 public:
     int (*hp)(int, int, int, int, int);
     int* status;
-    int* arr;
+    Symbol* arr;
     int size;
 public:
   OpenHash() {
@@ -31,20 +46,6 @@ public:
        delete[] status;
     }
 };
-////////////////////////////////////////////////////////////
-class Symbol{
-public:
-    string name;
-    string type;
-    int scope;
-    string decodes = ""; // Chua decode
-    int encode=-1;
-    int index=-1;
-public:
-    Symbol(){};
-    Symbol(const string &name, const string &type, int scope) : name(name), type(type), scope(scope) {};
-    ~Symbol() {};
-};
 ///////////////////////////////////////////////////////////
 class SymbolTable{
 public:
@@ -55,18 +56,14 @@ public:
         newHash = OpenHash();
     }
     ~SymbolTable(){}
-    void setAttribute(int c1,int c2,int m){
-        this->c1 = c1;
-        this->c2 = c2;
-        this->m = m;
-        newHash.size = m;
-        newHash.status = new int[m];
-        newHash.arr = new int[m];
-        for (int i = 0; i < newHash.size; i++) {
-            this->newHash.status[i] = 0; // 0 is null, 1 is has element
-        }
-    }
     void run(string filename);
+    void setAttribute(int c1,int c2,int m);
+    void setLinear(string ins);
+    void setQuadratic(string ins);
+    void setDouble(string ins);
+    int encodeName(string name,int cur_level);
+    void print(string &s);
+
 };
 regex linear("LINEAR [0-9]+ [0-9]+");
 regex quadratic("QUADRATIC [0-9]+ [0-9]+ [0-9]+");
