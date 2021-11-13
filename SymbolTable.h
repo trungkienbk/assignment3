@@ -2,6 +2,17 @@
 #define SYMBOLTABLE_H
 #include "main.h"
 ////////////////////////////////////////////////////////////
+static int linearProbing(int key, int i,int c1,int c2,int m) {
+    return ((key % m) + c1*i) % m;
+}
+static int quadraticProbing(int key, int i,int c1,int c2,int m) {
+    return ((key % m) + i + c1* i * c2*i) % m;
+}
+static int doubleHashing(int key, int i,int c1,int c2,int m) {
+    int h1 = key % m;
+    int h2 = 1 + (key % (m-2));
+    return (h1 + c1*i * h2) % m;
+}
 class OpenHash{
 public:
     int (*hp)(int, int, int, int, int);
@@ -40,17 +51,6 @@ public:
     OpenHash newHash;
     int c1, c2, m;
 public:
-    static int linearProbing(int key, int i,int c1,int c2,int m) {
-        return ((key % m) + c1*i) % m;
-    }
-    static int quadraticProbing(int key, int i,int c1,int c2,int m) {
-        return ((key % m) + i + c1* i * c2*i) % m;
-    }
-    static int doubleHashing(int key, int i,int c1,int c2,int m) {
-        int h1 = key % m;
-        int h2 = 1 + (key % (m-2));
-        return (h1 + c1*i * h2) % m;
-    }
     SymbolTable(){
         newHash = OpenHash();
     }
