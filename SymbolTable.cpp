@@ -12,6 +12,7 @@ void SymbolTable::run(string filename)
             int c1_linear= 1;
             int m_linear= 1;
             this->setAttribute(c1_linear,0,m_linear);
+            newHash.hp = linearProbing;
             cout<<"INIT LINEAR"<<endl;
         }
         else if(regex_match(ins,quadratic)){
@@ -20,6 +21,7 @@ void SymbolTable::run(string filename)
             int c2_linear= 1;
             int m_linear= 1;
             this->setAttribute(c1_linear,c2_linear,m_linear);
+            newHash.hp = quadraticProbing;
             cout<<"INIT QUADRATIC"<<endl;
         }
         else if(regex_match(ins,doublee)){
@@ -27,6 +29,7 @@ void SymbolTable::run(string filename)
             int c1_linear= 1;
             int m_linear= 1;
             this->setAttribute(c1_linear,0,m_linear);
+            newHash.hp = doubleHashing;
             cout<<"INIT DOUBLE"<<endl;
         }
         else if(regex_match(ins,ins_vari)) {     ///// HAM INSERT BIEN
