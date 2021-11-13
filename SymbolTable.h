@@ -65,6 +65,7 @@ public:
         for (int i = 0; i < newHash.size; i++) {
             this->newHash.status[i] = 0; // 0 is null, 1 is has element
         }
+        newHash.hp =linearProbing; // nay test hoy
     }
     void run(string filename);
 };
