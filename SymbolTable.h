@@ -6,7 +6,7 @@ static int linearProbing(int key, int i,int c1,int c2,int m) {
     return ((key % m) + c1*i) % m;
 }
 static int quadraticProbing(int key, int i,int c1,int c2,int m) {
-    return ((key % m) + i + c1*i + c2*i*i) % m;
+    return ((key % m)  + c1*i + c2*i*i) % m;
 }
 static int doubleHashing(int key, int i,int c1,int c2,int m) {
     int h1 = key % m;
@@ -27,7 +27,6 @@ public:
     Symbol(const string &name, int scope) : name(name), scope(scope) {};
     ~Symbol() {};
 };
-
 class OpenHash{
 public:
     int (*hp)(int, int, int, int, int);
@@ -47,7 +46,7 @@ public:
     }
 };
 ///////////////////////////////////////////////////////////
-class SymbolTable{
+class SymbolTable : public OpenHash {
 public:
     OpenHash newHash;
     int c1, c2, m;
@@ -57,12 +56,16 @@ public:
     }
     ~SymbolTable(){}
     void run(string filename);
-    void setAttribute(int c1,int c2,int m);
+    void setAttribute(int c1_linear, int c2_linear, int m_linear);
     void setLinear(string ins);
     void setQuadratic(string ins);
     void setDouble(string ins);
     int encodeName(string name,int cur_level);
+    Symbol isContains(Symbol e,int cur_level);
     void print(string &s);
+    void insert_val(string ins,int cur_level);
+    void lookup(string ins,int cur_level);
+    void remove(int cur_level);
 
 };
 regex linear("LINEAR [0-9]+ [0-9]+");

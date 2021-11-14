@@ -11,13 +11,14 @@ void SymbolTable::run(string filename)
             setLinear(ins);
         }
         else if(regex_match(ins,quadratic)){
-            setDouble(ins);
-        }
-        else if(regex_match(ins,doublee)){
             setQuadratic(ins);
         }
+        else if(regex_match(ins,doublee)){
+            setDouble(ins);
+        }
         else if(regex_match(ins,ins_vari)) {     ///// HAM INSERT BIEN
-           cout<<"INSERT BIEN OK"<<endl;
+            insert_val(ins,cur_level);
+
         }
         else if (regex_match(ins,ins_func)){ ///// HAM INSERT FUNCTION
             cout<<"INSERT FUNC OK"<<endl;
@@ -32,7 +33,7 @@ void SymbolTable::run(string filename)
             cout<<"ASSIGN HAM OK"<<endl;
         }
         else if(regex_match(ins,look_up)){
-            cout<<"LOOKUP OK"<<endl;
+            lookup(ins,cur_level);
         }
         else if(regex_match(ins,call)){
             cout<<"CALL OK"<<endl;
@@ -48,14 +49,13 @@ void SymbolTable::run(string filename)
             cout<<s<<endl;
         }
         else if(ins == "BEGIN"){
-            cout<<"BEGIN OK"<<endl;
             cur_level++;
         }
         else if(ins =="END"){
             if(cur_level == 0){
                 throw UnknownBlock();
             }
-            cout<<"END OK"<<endl;
+            remove(cur_level);
             cur_level--;
         }
         else throw InvalidInstruction(ins);
@@ -81,9 +81,9 @@ void SymbolTable::setLinear(string ins) {
     newHash.hp = linearProbing;
 }
 void SymbolTable::setQuadratic(string ins) {
-    int c1_linear= 1;
-    int c2_linear= 1;
-    int m_linear= 1;
+    int c1_linear;
+    int c2_linear;
+    int m_linear;
     int index[3]={0,0,0};
     int j = 0;
     for(int i=0;i<(int)ins.size();++i){
@@ -96,13 +96,15 @@ void SymbolTable::setQuadratic(string ins) {
     m_linear = stoi(ins.substr(index[0]+1,index[1]-index[0]-1));
     c1_linear = stoi(ins.substr(index[1]+1,index[2]-index[1]-1));
     c2_linear = stoi(ins.substr(index[2]+1));
-    this->setAttribute(c1_linear,c2_linear,m_linear);
+    setAttribute(c1_linear,c2_linear,m_linear);
     newHash.hp = quadraticProbing;
+  //  cout<<"Check m,c1,c2 " <<m_linear << this->m
+   // << " -- "<<c1_linear << this->c1 << " -- "<<c2_linear << this->c2;
 }
 void SymbolTable::setDouble(string ins) {
-    int c1_linear= 1;
-    int c2_linear= 0;
-    int m_linear= 1;
+    int c1_linear;
+    int c2_linear;
+    int m_linear;
     int count = 0;
     int index[2]={0,0};
     int j = 0;
@@ -118,15 +120,15 @@ void SymbolTable::setDouble(string ins) {
     this->setAttribute(c1_linear,c2_linear,m_linear);
     newHash.hp = doubleHashing;
 }
-void SymbolTable::setAttribute(int c1, int c2, int m) {
-    this->c1 = c1;
-    this->c2 = c2;
-    this->m = m;
-    newHash.size = m;
+void SymbolTable::setAttribute(int c1_linear, int c2_linear, int m_linear) {
+    this->c1 = c1_linear;
+    this->c2 = c2_linear;
+    this->m = m_linear;
+    newHash.size = m_linear;
     newHash.status = new int[m];
     newHash.arr = new Symbol[m];
     for (int i = 0; i < newHash.size; i++) {
-        this->newHash.status[i] = 0; // 0 is null, 1 is has element
+        newHash.status[i] = 0; // 0 is null, 1 is has element
     }
 }
 
@@ -141,7 +143,79 @@ int SymbolTable::encodeName(string name, int cur_level) {
 void SymbolTable::print(string &s) {
     for (int i = 0; i < newHash.size ; i++) {
         if (newHash.status[i] == 1) {
-            s += to_string(i) + " " + newHash.arr[i].name + "//" + to_string(newHash.arr[i].scope)+";";
+            s += to_string(i) + " " + newHash.arr[i].name + "//" + to_string(newHash.arr[i].scope) +";";
         }
     }
 }
+
+Symbol SymbolTable::isContains(Symbol e, int cur_level) {
+    int key = encodeName(e.name,cur_level);
+    for (int i = 0; i < newHash.size; i++)
+    {
+        int k = newHash.hp(key, i, c1, c2, m);
+        if (newHash.arr[k].encode == key && newHash.status[k] == 1)
+            return newHash.arr[k];
+    }
+    return Symbol("null",-1);
+}
+
+void SymbolTable::insert_val(string ins, int cur_level) {
+    string name;
+    int index = ins.find(" ");
+    name = ins.substr(index+1);
+    Symbol e(name,cur_level);
+    e.encode = encodeName(name,cur_level);
+    Symbol check = isContains(e,cur_level);
+    if(check.name != "null") throw Redeclared(ins);
+  //  cout<<" thuoc tinh  : c1->"<<c1<<" c2->"<<c2<<" m(size) ->"<<m<<endl;
+    for(int i = 0 ; i < newHash.size ; ++i){
+        int k = newHash.hp(e.encode,i,c1,c2,m);
+       // cout<<"key " <<k<< " -> count : ";
+        if( newHash.status[k] == 0 ){
+            newHash.arr[k] = e ;
+            newHash.status[k] = 1;
+            newHash.arr[k].index=k;
+            cout<<i<<endl;
+            return;
+        }
+    }
+    throw Overflow(ins);
+}
+
+void SymbolTable::lookup(string ins, int cur_level) {
+    string name;
+    int index = ins.find(" ");
+    name = ins.substr(index+1);
+    Symbol check;
+    while(cur_level >= 0) {
+        Symbol e(name,cur_level);
+        e.encode = encodeName(name,cur_level);
+        check = isContains(e,cur_level);
+        if(check.name !="null") break;
+        cur_level--;
+    }
+    if(check.name =="null") throw Undeclared(ins);
+    cout<<check.index<<endl;
+}
+
+void SymbolTable::remove(int cur_level) {
+    for(int i = 0; i < newHash.size ;++i){
+        if(newHash.arr[i].scope !=0  && newHash.arr[i].scope == cur_level && newHash.status[i] ==1){
+            newHash.status[i] = 0;
+        }
+    }
+}
+/*
+ void remove(int key) {
+        for (int i = 0; i < size; i++)
+        {
+            int k = hp(key, i);
+            if (status[k] == NON_EMPTY)
+            {
+                status[k] = NIL;
+                return;
+            }
+        }
+        throw std::invalid_argument("Not found!");
+    }
+ */
